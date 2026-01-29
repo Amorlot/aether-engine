@@ -1,9 +1,4 @@
 
----
-
-### README.md
-
-
 # Aether Engine
 
 High-performance RAG (Retrieval-Augmented Generation) system with a localized reasoning model and vector database.

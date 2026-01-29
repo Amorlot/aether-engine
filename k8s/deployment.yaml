@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aether-api-deployment
+  labels:
+    app: aether-engine
+spec:
+  replicas: 2 # Kubernetes manterrà sempre 2 istanze attive per l'alta affidabilità
+  selector:
+    matchLabels:
+      app: aether-api
+  template:
+    metadata:
+      labels:
+        app: aether-api
+    spec:
+      containers:
+      - name: api-rust
+        image: tuo-utente-github/aether-engine-api:latest # L'immagine caricata sul registro
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+        env:
+        - name: DATABASE_URL
+          value: "http://qdrant-service:6333"
+        - name: OLLAMA_URL
+          value: "http://ollama-service:11434"
