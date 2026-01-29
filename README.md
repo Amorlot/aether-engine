@@ -30,7 +30,7 @@
 
 1.  **Clone the Repository**
     ```bash
-    git clone [https://github.com/your-username/aether-engine.git](https://github.com/your-username/aether-engine.git)
+    git clone [https://github.com/Amorlot/aether-engine.git]
     cd aether-engine
     ```
 
