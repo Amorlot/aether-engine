@@ -1,0 +1,29 @@
+services:
+  # Il tuo backend in Rust
+  api-rust:
+    build:
+      context: ./api-rust
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ROCKET_ADDRESS=0.0.0.0
+    networks:
+      - aether-network
+
+  # Il Database Vettoriale per l'AI
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      - aether-network
+
+networks:
+  aether-network:
+    driver: bridge
+
+volumes:
+  qdrant_storage:
