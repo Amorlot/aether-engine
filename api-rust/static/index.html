@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether Engine | Gemini Style</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #131314; color: #e3e3e3; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .sidebar { background-color: #1e1f20; }
+        .input-container { background-color: #1e1f20; border-radius: 28px; transition: background-color 0.2s; }
+        .input-container:focus-within { background-color: #28292a; }
+        .thought-bubble { background-color: #1e1f20; border: 1px solid #333537; border-radius: 12px; }
+        .user-msg { background-color: #28292a; border-radius: 18px; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #3c4043; border-radius: 10px; }
+        /* Progress Bar */
+        #progress-container { display: none; }
+        #progress-bar { width: 0%; transition: width 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="sidebar w-72 flex flex-col p-4 hidden md:flex">
+        <div class="flex items-center gap-3 mb-8 px-2">
+            <span class="text-xl font-medium tracking-tight">Aether <span class="text-blue-400">Engine</span></span>
+        </div>
+        
+        <button onclick="resetSystem()" class="flex items-center gap-3 px-4 py-3 hover:bg-[#2d2f31] rounded-full text-sm transition mb-6">
+            <i class="fa-solid fa-plus text-lg"></i>
+            <span>Nuova chat</span>
+        </button>
+
+        <div class="flex-1 overflow-y-auto space-y-2 text-sm px-2">
+            <label class="text-xs text-gray-500 font-bold uppercase px-2">Sorgenti Attive</label>
+            <div id="source-list" class="space-y-1 mt-2"></div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative h-full">
+        
+        <header class="p-4 flex justify-between items-center bg-[#131314]/80 backdrop-blur-md sticky top-0 z-10">
+            <div class="flex items-center gap-2 cursor-pointer hover:bg-[#2d2f31] px-3 py-1 rounded-lg transition">
+                <span class="text-sm font-medium">Motore di Ragionamento v3</span>
+                <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-purple-500 flex items-center justify-center text-xs font-bold">A</div>
+        </header>
+
+        <div id="chat-window" class="flex-1 overflow-y-auto px-4 md:px-20 py-8 space-y-10 pb-40">
+            <div id="empty-state" class="flex flex-col items-center justify-center h-full opacity-40">
+                <i class="fa-solid fa-brain text-6xl mb-4 text-blue-400"></i>
+                <p class="text-xl">In cosa posso aiutarti oggi?</p>
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 left-0 right-0 px-4 md:px-20 pb-8 bg-gradient-to-t from-[#131314] via-[#131314] to-transparent">
+            
+            <div id="progress-container" class="max-w-4xl mx-auto mb-4 bg-[#1e1f20] rounded-full h-1 overflow-hidden">
+                <div id="progress-bar" class="h-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+            </div>
+
+            <div class="max-w-4xl mx-auto input-container px-4 py-2 flex flex-col gap-2 shadow-2xl">
+                <textarea id="user-input" rows="1" placeholder="Chiedi ad Aether..." 
+                    class="bg-transparent w-full focus:outline-none py-2 resize-none text-base" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                
+                <div class="flex items-center justify-between pb-1">
+                    <div class="flex items-center gap-1">
+                        <input type="file" id="pdf-input" hidden onchange="ingestPDF()" accept=".pdf">
+                        <button onclick="document.getElementById('pdf-input').click()" class="p-2 hover:bg-[#3c4043] rounded-full transition text-blue-400" title="Allega file">
+                            <i class="fa-solid fa-plus text-lg"></i>
+                        </button>
+                        <button class="flex items-center gap-2 px-3 py-1.5 hover:bg-[#3c4043] rounded-full transition text-xs text-gray-300">
+                            <i class="fa-solid fa-sliders"></i>
+                            <span>Strumenti</span>
+                        </button>
+                        <button class="flex items-center gap-2 px-3 py-1.5 hover:bg-[#3c4043] rounded-full transition text-xs text-gray-300">
+                            <i class="fa-solid fa-microchip"></i>
+                            <span>Ragionamento</span>
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-1">
+                        <button class="p-2 hover:bg-[#3c4043] rounded-full transition text-gray-400"><i class="fa-solid fa-microphone"></i></button>
+                        <button onclick="askQuestion()" class="p-2 bg-blue-500 hover:bg-blue-400 text-black rounded-full transition w-10 h-10 shadow-lg">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-[10px] text-gray-500 mt-4">Aether può commettere errori. Verifica le informazioni importanti.</p>
+        </div>
+    </main>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const emptyState = document.getElementById('empty-state');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+
+        function appendMessage(role, content, thought = null, score = null) {
+            emptyState.style.display = 'none';
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex flex-col ${role === 'user' ? 'items-end' : 'items-start'} gap-4 mb-6`;
+            
+            if (role === 'user') {
+                msgDiv.innerHTML = `<div class="user-msg px-5 py-3 max-w-2xl text-[15px]">${content}</div>`;
+            } else {
+                msgDiv.innerHTML = `
+                <div class="flex gap-4 w-full max-w-4xl">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold"><i class="fa-solid fa-robot"></i></div>
+                    <div class="flex-1 space-y-4">
+                        ${thought ? `
+                        <div class="thought-bubble px-4 py-3 text-sm text-gray-400 italic leading-relaxed">
+                            <div class="text-[10px] font-bold uppercase text-blue-500 mb-1 tracking-widest"><i class="fa-solid fa-bolt mr-2"></i>Thought Process</div>
+                            ${thought}
+                        </div>` : ''}
+                        <div class="text-[15px] leading-relaxed text-gray-200">${content}</div>
+                        ${score !== null ? `
+                        <div class="flex items-center gap-4 text-[10px] text-gray-500 font-bold uppercase">
+                            <span><i class="fa-solid fa-chart-line mr-1"></i> Confidence: ${(score * 100).toFixed(1)}%</span>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            }
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function askQuestion() {
+            const input = document.getElementById('user-input');
+            const question = input.value.trim();
+            if (!question) return;
+            appendMessage('user', question);
+            input.value = '';
+            input.style.height = 'auto';
+
+            try {
+                const res = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({question})
+                });
+                const data = await res.json();
+                appendMessage('bot', data.answer, data.thought, data.confidence_score);
+            } catch (e) {
+                appendMessage('bot', 'Errore: impossibile connettersi al server.');
+            }
+        }
+
+        function ingestPDF() {
+            const fileInput = document.getElementById('pdf-input');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/ingest-pdf', true);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const pct = (e.loaded / e.total) * 100;
+                    progressBar.style.width = pct + '%';
+                }
+            };
+
+            xhr.onload = () => {
+                const data = JSON.parse(xhr.responseText);
+                progressContainer.style.display = 'none';
+                if (data.status === 'success') {
+                    const sourceList = document.getElementById('source-list');
+                    const div = document.createElement('div');
+                    div.className = "flex items-center gap-3 px-3 py-2 bg-[#2d2f31] rounded-lg text-xs truncate";
+                    div.innerHTML = `<i class="fa-solid fa-file-pdf text-red-400"></i> ${file.name}`;
+                    sourceList.appendChild(div);
+                } else {
+                    alert('Errore caricamento: ' + data.message);
+                }
+            };
+
+            xhr.send(formData);
+        }
+
+        async function resetSystem() {
+            if(confirm('Vuoi davvero cancellare la memoria della chat?')) {
+                await fetch('/reset', {method: 'POST'});
+                location.reload();
+            }
+        }
+
+        document.getElementById('user-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askQuestion(); }
+        });
+    </script>
+</body>
+</html>

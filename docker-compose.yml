@@ -1,17 +1,18 @@
 services:
-  # Il tuo backend in Rust
   api-rust:
     build:
       context: ./api-rust
-      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
       - ROCKET_ADDRESS=0.0.0.0
+      - ROCKET_PORT=8000
+    depends_on:
+      - qdrant
+      - ollama
     networks:
       - aether-network
 
-  # Il Database Vettoriale per l'AI
   qdrant:
     image: qdrant/qdrant:latest
     ports:
@@ -21,9 +22,28 @@ services:
     networks:
       - aether-network
 
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_storage:/root/.ollama
+    networks:
+      - aether-network
+    # --- GPU CONFIGURATION ---
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # -------------------------
+
 networks:
   aether-network:
     driver: bridge
 
 volumes:
   qdrant_storage:
+  ollama_storage:
