@@ -1,36 +1,59 @@
+
 services:
+  # --- Backend Service (Rust Rocket) ---
   api-rust:
+    container_name: aether-api
     build:
       context: ./api-rust
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
       - ROCKET_ADDRESS=0.0.0.0
       - ROCKET_PORT=8000
+      - ROCKET_PROFILE=debug
+      # Explicitly define external service URLs for clarity (optional override)
+      - QDRANT_HOST=qdrant
+      - OLLAMA_HOST=ollama
     depends_on:
       - qdrant
       - ollama
     networks:
       - aether-network
+    restart: unless-stopped
+    # Hardware access for system monitoring (nvidia-smi integration)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
+  # --- Vector Database ---
   qdrant:
+    container_name: aether-qdrant
     image: qdrant/qdrant:latest
     ports:
-      - "6333:6333"
+      - "6333:6333" # Exposed for local debugging/dashboard
     volumes:
       - qdrant_storage:/qdrant/storage
     networks:
       - aether-network
+    restart: unless-stopped
 
+  # --- LLM Inference Engine ---
   ollama:
+    container_name: aether-ollama
     image: ollama/ollama:latest
     ports:
-      - "11434:11434"
+      - "11434:11434" # Exposed for local testing
     volumes:
       - ollama_storage:/root/.ollama
     networks:
       - aether-network
-    # --- GPU CONFIGURATION ---
+    restart: unless-stopped
+    # GPU Pass-through for Inference acceleration
     deploy:
       resources:
         reservations:
@@ -38,8 +61,8 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    # -------------------------
 
+# --- Networking & Persistence ---
 networks:
   aether-network:
     driver: bridge

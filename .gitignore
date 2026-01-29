@@ -1,15 +1,39 @@
-# Rust
-target/
+# --- Rust ---
+/target
+/api-rust/target
 **/*.rs.bk
-Cargo.lock
 
-# IDE
+# Note: Cargo.lock is intentionally kept to ensure reproducible builds.
+# Do not uncomment the line below unless strictly necessary.
+# Cargo.lock
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# --- Docker & Local Data ---
+.docker
+docker-compose.override.yml
+.fastembed_cache/
+
+# Local Storage Volumes (mapped in docker-compose)
+qdrant_storage/
+ollama_storage/
+
+# --- IDE & Environment ---
+.env
 .vscode/
 .idea/
-
-# OS
+*.swp
 .DS_Store
-Thumbs.db
 
-# Docker/Environment
-.env
+# --- Uploads & Temporary Files ---
+*.pdf
+*.log
+temp/

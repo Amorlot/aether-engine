@@ -4,12 +4,26 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rocket = { version = "0.5.1", features = ["json"] }
-reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+# Web Framework
+rocket = { version = "0.5.0", features = ["json", "secrets"] }
+
+# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# Async HTTP Client
+reqwest = { version = "0.11", features = ["json", "stream"] }
+
+# AI Embeddings
+# Usiamo la 4.0 che ha una gestione migliore delle dipendenze interne
+fastembed = "4.0"
+
+# Utilities
+uuid = { version = "1.4", features = ["v4"] }
+scraper = "0.19" 
+
+# PDF Parsing
+lopdf = "0.32"
+
+# Async Runtime
 tokio = { version = "1", features = ["full"] }
-scraper = "0.19"
-uuid = { version = "1.7", features = ["v4"] }
-fastembed = "4.0.0"
-pdf-extract = "0.7"

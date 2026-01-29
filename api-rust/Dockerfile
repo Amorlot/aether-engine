@@ -1,8 +1,10 @@
+# ==========================================
 # STAGE 1: Builder
-# Using the full Bookworm image to ensure all build tools are available
+# Compiles the Rust binary using the official Debian-based image
+# ==========================================
 FROM rust:bookworm AS builder
 
-# Install system dependencies required for compiling Rust crates (like openssl)
+# Install system dependencies required for OpenSSL and pkg-config
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
@@ -10,42 +12,66 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# 1. Cache Dependencies
-# Copy only the configuration files first to cache the heavy download layer
+# ------------------------------------------
+# Dependency Caching Layer
+# ------------------------------------------
+# Copy manifest files only to cache dependencies
 COPY Cargo.toml Cargo.lock* ./
+
+# Create a dummy main.rs to force Cargo to build dependencies only
+# This layer is cached unless Cargo.toml changes
 RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release
 
-# 2. Real Build
-# Remove the skeleton and copy the actual source code
+# ------------------------------------------
+# Application Build Layer
+# ------------------------------------------
+# Remove dummy source and copy actual application code
 RUN rm -rf src
 COPY src ./src
-# Update the timestamp of main.rs to force a fresh build of the local code
+
+# Update timestamp to force a rebuild of the application logic
+# and compile the release binary
 RUN touch src/main.rs && cargo build --release
 
-# ---
-
+# ==========================================
 # STAGE 2: Runtime
-# Using a slim image to keep the final size small (~100MB)
-FROM debian:bookworm-slim
+# Uses NVIDIA CUDA base image to ensure compatibility with Host GPU Drivers
+# ==========================================
+FROM nvidia/cuda:12.4.1-base-ubuntu22.04
+
 WORKDIR /app
 
-# Install runtime dependencies:
-# - ca-certificates: Required for HTTPS requests to Ollama/Qdrant
-# - libssl3: Required for the compiled binary to run
+# ------------------------------------------
+# Runtime Dependencies
+# ------------------------------------------
+# - ca-certificates: Essential for HTTPS requests (Reqwest)
+# - libssl3: Required by the compiled Rust binary
+# - procps: Provides 'top' command for CPU monitoring
+# NOTE: 'nvidia-smi' is injected by the NVIDIA Container Toolkit at runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libssl3 \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the compiled binary from the builder stage
+# ------------------------------------------
+# Artifacts & Assets
+# ------------------------------------------
+# Retrieve the compiled binary from the builder stage
 COPY --from=builder /app/target/release/aether-api .
 
-# Copy the static assets for the Web UI
+# Retrieve static assets (HTML/JS/CSS) for the frontend
 COPY static /app/static
 
-# Rocket configuration for Docker environment
+# ------------------------------------------
+# Configuration & Startup
+# ------------------------------------------
+# Configure Rocket to listen on all interfaces
 ENV ROCKET_ADDRESS=0.0.0.0
 ENV ROCKET_PORT=8000
 
-# Run the backend
+# Expose the port (informative, Docker Compose handles mapping)
+EXPOSE 8000
+
+# Launch the Aether Engine API
 CMD ["./aether-api"]

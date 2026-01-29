@@ -1,100 +1,84 @@
-
 # Aether Engine
 
-High-performance RAG (Retrieval-Augmented Generation) system with a localized reasoning model and vector database.
+![Rust](https://img.shields.io/badge/Backend-Rust%20Rocket-orange?style=flat&logo=rust)
+![Docker](https://img.shields.io/badge/Container-Docker-blue?style=flat&logo=docker)
+![AI](https://img.shields.io/badge/Model-Llama%203.2-purple?style=flat&logo=openai)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## Features
-* Reasoning Model: Llama 3.2 3B via Ollama.
-* Vector Database: Qdrant for semantic search.
-* Multilingual Support: Optimized for Italian and English via paraphrase-multilingual-MiniLM-L12-v2.
-* GPU Acceleration: Configured for NVIDIA GPUs (GTX 1080 Ti).
-* Automated Management: Python script for builds, logs, and maintenance.
+**Aether Engine** is a high-performance, local Retrieval-Augmented Generation (RAG) system designed for semantic analysis and reasoning on private documents. It leverages the safety and speed of **Rust** for the API, **Qdrant** for vector search, and **Ollama** for local inference, all optimized for NVIDIA GPUs.
+
+## Key Features
+
+* **Rust Backend**: Built with the **Rocket** framework for ultra-low latency and type safety.
+* **Local Reasoning**: Uses **Llama 3.2 3B** (via Ollama) for inference, ensuring data privacy.
+* **Semantic Search**: **Qdrant** vector database with `paraphrase-multilingual-MiniLM-L12-v2` embeddings for precise retrieval in Italian and English.
+* **📊 Hardware Monitor**: Real-time tracking of **CPU** and **VRAM** usage directly in the UI.
+* **LLM-as-a-Judge**: Automated self-evaluation pipeline that scores answers based on *Faithfulness* and *Relevance*.
+* **Page-Aware Ingestion**: PDF processing using `lopdf` to track and cite specific page numbers.
+* **NVIDIA Native**: Docker container optimized with `nvidia/cuda` base images for direct GPU pass-through.
 
 ## Prerequisites
-* OS: Arch Linux (recommended) or any modern Linux distribution.
-* Hardware: NVIDIA GPU with 8GB+ VRAM.
-* Software: Docker, Docker Compose, NVIDIA Container Toolkit, Python 3.x.
 
-## Installation
-1. Clone the repository:
-   ```bash
-   git clone [https://github.com/username/aether-engine.git](https://github.com/username/aether-engine.git)
-   cd aether-engine
+* **OS**: Arch Linux, Ubuntu 22.04+, or any Linux distro with Docker support.
+* **Hardware**: NVIDIA GPU with minimum 8GB VRAM (Tested on GTX 1080 Ti).
+* **Software**:
+    * Docker & Docker Compose
+    * NVIDIA Container Toolkit
+    * Python 3.x (for the management script)
 
+## Installation & Setup
 
-2. Build and start the system:
-```bash
-python manager.py rebuild
+1.  **Clone the Repository**
+    ```bash
+    git clone [https://github.com/your-username/aether-engine.git](https://github.com/your-username/aether-engine.git)
+    cd aether-engine
+    ```
 
-```
+2.  **Build the System**
+    Use the included Python manager to handle the multi-stage build:
+    ```bash
+    python manager.py rebuild
+    ```
 
+3.  **Download the LLM**
+    Once containers are running, pull the specific model version:
+    ```bash
+    docker exec -it aether-ollama ollama pull llama3.2:3b
+    ```
 
-3. Pull the required LLM model:
-```bash
-docker exec -it aether-engine-ollama-1 ollama pull llama3.2:3b
+##  Usage
 
-```
+1.  Access the dashboard at **[http://localhost:8000](http://localhost:8000)**.
+2.  **Resource Check**: Verify CPU and VRAM stats in the sidebar.
+3.  **Ingestion**:
+    * Click the 📎 icon to upload a PDF.
+    * Wait for the "Stored X chunks" confirmation.
+4.  **Query**: Type your question. The system will retrieve context, reason, and provide a cited answer with an evaluation score.
 
+##  Management Script
 
+A `manager.py` utility is provided to simplify DevOps tasks:
 
-## Usage
+| Command | Description |
+| :--- | :--- |
+| `python manager.py start` | Starts all services in detached mode. |
+| `python manager.py stop` | Gracefully stops containers. |
+| `python manager.py rebuild` | Cleans cache and forces a full rebuild. |
+| `python manager.py logs` | Streams logs from the Rust backend. |
+| `python manager.py clean` | Removes temporary cache files. |
+| `python manager.py status` | Shows container health status. |
 
-1. Open http://localhost:8000.
-2. Click "New Chat (Reset)" to initialize the vector collection.
-3. Upload a PDF or provide a URL for ingestion.
-4. Interact with the chat interface.
-
-## Management Commands
-
-* View logs: `python manager.py logs`
-* Stop services: `python manager.py stop`
-* Clean cache and locks: `python manager.py clean`
-* Check status: `python manager.py status`
-
-## Project Structure
-
-* /src: Rust backend source code.
-* /static: Frontend assets (HTML/JS/CSS).
-* manager.py: System automation script.
-* docker-compose.yml: Service orchestration.
-* Dockerfile: Multi-stage Rust build.
-
-```
-
----
-
-### .gitignore
+##  Project Structure
 
 ```text
-# Rust
-/target
-Cargo.lock
-
-# Data and Cache
-.fastembed_cache/
-*.pdf
-*.log
-
-# Python
-__pycache__/
-*.pyc
-
-# Environment and IDE
-.env
-.vscode/
-.idea/
-
-# Docker
-.docker
-
-```
-Scalability and Deployment (Cloud-Native)
-
-While the project is optimized for local execution via **Docker Compose**, the architecture is designed to be "Cloud-Ready." The `/k8s` directory includes manifests for orchestration using **Kubernetes**:
-
-- **Deployment**: Configuration for horizontal scaling of the Rust backend with replica management to ensure High Availability.
-- **Service**: Implementation of a LoadBalancer to distribute traffic across various pods.
-- **Resource Management**: Definition of CPU and memory limits and requests for efficient resource utilization within a production cluster.
-
-This structure allows for a seamless transition from a local development environment to a scalable cloud infrastructure (AWS EKS, Google GKE, or Azure AKS), demonstrating a clear separation between application logic and infrastructure management.
----
+aether-engine/
+├── api-rust/           # Rust Backend (Rocket framework)
+│   ├── src/            # Source code (main.rs)
+│   ├── Dockerfile      # Multi-stage NVIDIA/Rust build
+│   └── Cargo.toml      # Dependencies
+├── static/             # Frontend Assets
+│   └── index.html      # Dark Mode UI
+├── k8s/                # Kubernetes Manifests
+├── docker-compose.yml  # Service Orchestration
+├── manager.py          # DevOps Automation Script
+└── README.md           # Documentation
