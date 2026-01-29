@@ -177,10 +177,19 @@ async fn ask(state: &State<AppState>, request: Json<AskRequest>) -> Json<AskResp
         .collect::<Vec<_>>().join("\n---\n");
 
     let prompt = format!(
-        "SYSTEM: Answer using the context. Format your response with THOUGHT: and ANSWER:.\n\
-        Context: {}\n\nQuestion: {}\n\n",
-        context, request.question
-    );
+    "SYSTEM: Sei un assistente esperto. Usa esclusivamente il contesto fornito per rispondere.
+    DEVI rispondere seguendo ESATTAMENTE questo schema:
+    THOUGHT: [scrivi qui il tuo ragionamento interno in italiano]
+    ANSWER: [scrivi qui la risposta finale in italiano, usa il markdown per grassetti e liste]
+
+    CONTESTO:
+    {}
+
+    DOMANDA:
+    {}",
+    context, request.question
+);
+    
 
     let ollama_res = client.post("http://ollama:11434/api/generate")
         .json(&json!({ "model": "llama3.2:3b", "prompt": prompt, "stream": false }))

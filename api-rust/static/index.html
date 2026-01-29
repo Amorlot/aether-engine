@@ -1,127 +1,132 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aether Engine | Gemini Style</title>
+    <title>Aether Engine | Dark Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
     <style>
-        body { background-color: #131314; color: #e3e3e3; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .sidebar { background-color: #1e1f20; }
-        .input-container { background-color: #1e1f20; border-radius: 28px; transition: background-color 0.2s; }
-        .input-container:focus-within { background-color: #28292a; }
-        .thought-bubble { background-color: #1e1f20; border: 1px solid #333537; border-radius: 12px; }
-        .user-msg { background-color: #28292a; border-radius: 18px; }
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #3c4043; border-radius: 10px; }
-        /* Progress Bar */
-        #progress-container { display: none; }
-        #progress-bar { width: 0%; transition: width 0.3s ease-in-out; }
+        /* Tema Scuro Profondo */
+        body { background-color: #0e0e10; color: #e3e3e3; font-family: 'Inter', system-ui, sans-serif; }
+        .sidebar { background-color: #171719; border-right: 1px solid #2d2d30; }
+        .input-pill { background-color: #1e1e21; border: 1px solid #3c4043; border-radius: 32px; }
+        .thought-section { background-color: #161618; border-left: 2px solid #3c4043; margin: 10px 0; }
+        .source-tag { background: #2d2d30; border: 1px solid #3c4043; border-radius: 6px; padding: 2px 8px; font-size: 11px; color: #a1a1a6; }
+        .gemini-gradient { background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #progress-bar { height: 2px; background: linear-gradient(90deg, #4285f4, #d96570); transition: width 0.3s; }
+        
+        /* Stili per il contenuto Markdown */
+        .prose strong { color: #fff; font-weight: 600; }
+        .prose code { color: #e3e3e3; background-color: #2d2d30; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; }
+        .prose pre code { background-color: transparent; padding: 0; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; }
+        .prose li { margin-bottom: 0.5em; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="flex h-screen overflow-hidden bg-[#0e0e10]">
 
-    <aside class="sidebar w-72 flex flex-col p-4 hidden md:flex">
-        <div class="flex items-center gap-3 mb-8 px-2">
-            <span class="text-xl font-medium tracking-tight">Aether <span class="text-blue-400">Engine</span></span>
+    <aside class="sidebar w-64 flex flex-col p-4 hidden lg:flex">
+        <div class="mb-8 px-2 flex items-center">
+            <img src="/logo.png" alt="Aether Logo" class="w-10 h-10 mr-3 drop-shadow-[0_0_10px_rgba(66,133,244,0.5)]">
+            <span class="font-bold text-lg tracking-tight text-gray-100">Aether</span>
         </div>
         
-        <button onclick="resetSystem()" class="flex items-center gap-3 px-4 py-3 hover:bg-[#2d2f31] rounded-full text-sm transition mb-6">
-            <i class="fa-solid fa-plus text-lg"></i>
-            <span>Nuova chat</span>
+        <button onclick="resetSystem()" class="flex items-center gap-3 px-4 py-3 bg-[#202124] hover:bg-[#2d2f31] rounded-2xl text-sm transition mb-6 shadow-sm text-gray-200">
+            <i class="fa-solid fa-plus text-blue-400"></i><span>Nuova Sessione</span>
         </button>
-
-        <div class="flex-1 overflow-y-auto space-y-2 text-sm px-2">
-            <label class="text-xs text-gray-500 font-bold uppercase px-2">Sorgenti Attive</label>
-            <div id="source-list" class="space-y-1 mt-2"></div>
+        <div class="flex-1 overflow-y-auto">
+            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2 mb-4">Documenti Caricati</p>
+            <div id="source-list" class="space-y-2"></div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col relative h-full">
+    <main class="flex-1 flex flex-col relative bg-[#0e0e10]">
         
-        <header class="p-4 flex justify-between items-center bg-[#131314]/80 backdrop-blur-md sticky top-0 z-10">
-            <div class="flex items-center gap-2 cursor-pointer hover:bg-[#2d2f31] px-3 py-1 rounded-lg transition">
-                <span class="text-sm font-medium">Motore di Ragionamento v3</span>
-                <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
-            </div>
-            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-purple-500 flex items-center justify-center text-xs font-bold">A</div>
-        </header>
-
-        <div id="chat-window" class="flex-1 overflow-y-auto px-4 md:px-20 py-8 space-y-10 pb-40">
-            <div id="empty-state" class="flex flex-col items-center justify-center h-full opacity-40">
-                <i class="fa-solid fa-brain text-6xl mb-4 text-blue-400"></i>
-                <p class="text-xl">In cosa posso aiutarti oggi?</p>
+        <div id="chat-window" class="flex-1 overflow-y-auto px-6 md:px-24 py-10 space-y-12 pb-48">
+            <div id="empty-state" class="flex flex-col items-center justify-center h-full text-center opacity-80">
+                <h1 class="text-4xl font-medium mb-4 text-white">Analisi Intelligente</h1>
+                <p class="text-gray-400 max-w-md leading-relaxed">Carica documenti o poni domande complesse. Il sistema utilizzerà il ragionamento avanzato per risponderti.</p>
             </div>
         </div>
 
-        <div class="absolute bottom-0 left-0 right-0 px-4 md:px-20 pb-8 bg-gradient-to-t from-[#131314] via-[#131314] to-transparent">
+        <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#0e0e10] via-[#0e0e10] to-transparent">
+            <div id="progress-container" class="max-w-3xl mx-auto mb-2 hidden"><div id="progress-bar" style="width: 0%"></div></div>
             
-            <div id="progress-container" class="max-w-4xl mx-auto mb-4 bg-[#1e1f20] rounded-full h-1 overflow-hidden">
-                <div id="progress-bar" class="h-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
-            </div>
-
-            <div class="max-w-4xl mx-auto input-container px-4 py-2 flex flex-col gap-2 shadow-2xl">
-                <textarea id="user-input" rows="1" placeholder="Chiedi ad Aether..." 
-                    class="bg-transparent w-full focus:outline-none py-2 resize-none text-base" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+            <div class="max-w-3xl mx-auto input-pill shadow-2xl p-2 px-4 bg-[#1e1e21]">
+                <textarea id="user-input" rows="1" placeholder="Scrivi qui la tua domanda..." 
+                    class="bg-transparent w-full focus:outline-none py-3 px-2 resize-none text-base text-gray-200 placeholder-gray-500" oninput="autoGrow(this)"></textarea>
                 
-                <div class="flex items-center justify-between pb-1">
-                    <div class="flex items-center gap-1">
+                <div class="flex items-center justify-between mt-1 pb-1 px-1">
+                    <div class="flex items-center gap-2">
                         <input type="file" id="pdf-input" hidden onchange="ingestPDF()" accept=".pdf">
-                        <button onclick="document.getElementById('pdf-input').click()" class="p-2 hover:bg-[#3c4043] rounded-full transition text-blue-400" title="Allega file">
-                            <i class="fa-solid fa-plus text-lg"></i>
+                        <button onclick="document.getElementById('pdf-input').click()" class="p-2 hover:bg-[#3c4043] rounded-full transition text-blue-400" title="Allega PDF">
+                            <i class="fa-solid fa-paperclip"></i>
                         </button>
-                        <button class="flex items-center gap-2 px-3 py-1.5 hover:bg-[#3c4043] rounded-full transition text-xs text-gray-300">
-                            <i class="fa-solid fa-sliders"></i>
-                            <span>Strumenti</span>
-                        </button>
-                        <button class="flex items-center gap-2 px-3 py-1.5 hover:bg-[#3c4043] rounded-full transition text-xs text-gray-300">
-                            <i class="fa-solid fa-microchip"></i>
-                            <span>Ragionamento</span>
-                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        <button class="p-2 hover:bg-[#3c4043] rounded-full transition text-gray-400 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Ragionamento
                         </button>
                     </div>
-                    
-                    <div class="flex items-center gap-1">
-                        <button class="p-2 hover:bg-[#3c4043] rounded-full transition text-gray-400"><i class="fa-solid fa-microphone"></i></button>
-                        <button onclick="askQuestion()" class="p-2 bg-blue-500 hover:bg-blue-400 text-black rounded-full transition w-10 h-10 shadow-lg">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </div>
+                    <button onclick="askQuestion()" class="p-2 bg-[#e3e3e3] text-black rounded-full hover:bg-white transition h-10 w-10 flex items-center justify-center shadow-md">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </button>
                 </div>
             </div>
-            <p class="text-center text-[10px] text-gray-500 mt-4">Aether può commettere errori. Verifica le informazioni importanti.</p>
+            <p class="text-center text-xs text-gray-500 mt-4">Il sistema può commettere errori. Verifica le informazioni importanti.</p>
         </div>
     </main>
 
     <script>
-        const chatWindow = document.getElementById('chat-window');
-        const emptyState = document.getElementById('empty-state');
-        const progressContainer = document.getElementById('progress-container');
-        const progressBar = document.getElementById('progress-bar');
+        function autoGrow(element) {
+            element.style.height = "5px";
+            element.style.height = (element.scrollHeight) + "px";
+        }
 
-        function appendMessage(role, content, thought = null, score = null) {
-            emptyState.style.display = 'none';
+        function appendMessage(role, content, thought = null, score = null, sources = []) {
+            document.getElementById('empty-state').classList.add('hidden');
+            const chatWindow = document.getElementById('chat-window');
             const msgDiv = document.createElement('div');
-            msgDiv.className = `flex flex-col ${role === 'user' ? 'items-end' : 'items-start'} gap-4 mb-6`;
-            
+            msgDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in duration-500`;
+
             if (role === 'user') {
-                msgDiv.innerHTML = `<div class="user-msg px-5 py-3 max-w-2xl text-[15px]">${content}</div>`;
+                msgDiv.innerHTML = `<div class="bg-[#2d2d30] px-5 py-3 rounded-3xl max-w-xl text-gray-200 leading-relaxed">${content}</div>`;
             } else {
+                // Configura marked per usare highlight.js
+                marked.setOptions({
+                    highlight: function(code, lang) {
+                        if (lang && hljs.getLanguage(lang)) {
+                            return hljs.highlight(code, { language: lang }).value;
+                        } else {
+                            return hljs.highlightAuto(code).value;
+                        }
+                    }
+                });
+                const renderedContent = marked.parse(content);
+                
                 msgDiv.innerHTML = `
                 <div class="flex gap-4 w-full max-w-4xl">
-                    <div class="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold"><i class="fa-solid fa-robot"></i></div>
-                    <div class="flex-1 space-y-4">
+                    <div class="flex-1">
                         ${thought ? `
-                        <div class="thought-bubble px-4 py-3 text-sm text-gray-400 italic leading-relaxed">
-                            <div class="text-[10px] font-bold uppercase text-blue-500 mb-1 tracking-widest"><i class="fa-solid fa-bolt mr-2"></i>Thought Process</div>
-                            ${thought}
-                        </div>` : ''}
-                        <div class="text-[15px] leading-relaxed text-gray-200">${content}</div>
-                        ${score !== null ? `
-                        <div class="flex items-center gap-4 text-[10px] text-gray-500 font-bold uppercase">
-                            <span><i class="fa-solid fa-chart-line mr-1"></i> Confidence: ${(score * 100).toFixed(1)}%</span>
+                        <details class="group mb-4" open>
+                            <summary class="flex items-center gap-2 text-xs font-bold text-gray-500 cursor-pointer hover:text-blue-400 transition uppercase tracking-tighter select-none">
+                                <i class="fa-solid fa-brain group-open:rotate-12 transition-transform text-blue-500"></i>
+                                Processo di Ragionamento
+                            </summary>
+                            <div class="thought-section mt-2 px-4 py-3 text-sm text-gray-400 italic leading-relaxed rounded-r-lg">
+                                ${thought}
+                            </div>
+                        </details>` : ''}
+                        <div class="prose prose-invert max-w-none text-gray-200 leading-7">
+                            ${renderedContent}
+                        </div>
+                        ${score ? `
+                        <div class="mt-6 flex flex-wrap gap-2 items-center border-t border-[#2d2d30] pt-4">
+                            <span class="source-tag text-blue-400 border-blue-400/30"><i class="fa-solid fa-bullseye mr-1"></i> Confidenza: ${(score*100).toFixed(0)}%</span>
+                            ${sources.map((s, i) => `<span class="source-tag" title="${s}"><i class="fa-solid fa-link mr-1"></i> Fonte ${i+1}</span>`).join('')}
                         </div>` : ''}
                     </div>
                 </div>`;
@@ -145,9 +150,9 @@
                     body: JSON.stringify({question})
                 });
                 const data = await res.json();
-                appendMessage('bot', data.answer, data.thought, data.confidence_score);
+                appendMessage('bot', data.answer, data.thought, data.confidence_score, data.sources);
             } catch (e) {
-                appendMessage('bot', 'Errore: impossibile connettersi al server.');
+                appendMessage('bot', '**Errore critico:** Impossibile comunicare con il motore di ragionamento. Verifica che il backend sia attivo.');
             }
         }
 
@@ -156,43 +161,46 @@
             const file = fileInput.files[0];
             if (!file) return;
 
-            progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
+            const progCont = document.getElementById('progress-container');
+            const progBar = document.getElementById('progress-bar');
+            progCont.classList.remove('hidden');
+            progBar.style.width = '0%';
 
             const formData = new FormData();
             formData.append('file', file);
 
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/ingest-pdf', true);
-
-            xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                    const pct = (e.loaded / e.total) * 100;
-                    progressBar.style.width = pct + '%';
-                }
-            };
-
+            xhr.upload.onprogress = (e) => { if (e.lengthComputable) progBar.style.width = (e.loaded / e.total * 100) + '%'; };
+            
             xhr.onload = () => {
-                const data = JSON.parse(xhr.responseText);
-                progressContainer.style.display = 'none';
+                progCont.classList.add('hidden');
+                let data;
+                try { data = JSON.parse(xhr.responseText); } catch(e) { data = {status:'error', message:'Invalid JSON response'}; }
+                
                 if (data.status === 'success') {
-                    const sourceList = document.getElementById('source-list');
-                    const div = document.createElement('div');
-                    div.className = "flex items-center gap-3 px-3 py-2 bg-[#2d2f31] rounded-lg text-xs truncate";
-                    div.innerHTML = `<i class="fa-solid fa-file-pdf text-red-400"></i> ${file.name}`;
-                    sourceList.appendChild(div);
+                    const list = document.getElementById('source-list');
+                    list.innerHTML += `
+                    <div class="flex items-center gap-2 px-3 py-2 bg-[#1e1e21] rounded-xl text-xs text-gray-300 border border-[#3c4043] truncate animate-in fade-in slide-in-from-left-2">
+                        <i class="fa-solid fa-file-pdf text-red-500"></i>
+                        <span class="truncate">${file.name}</span>
+                    </div>`;
                 } else {
-                    alert('Errore caricamento: ' + data.message);
+                    alert('Errore durante il caricamento: ' + data.message);
                 }
             };
-
+            xhr.onerror = () => { progCont.classList.add('hidden'); alert('Errore di rete durante il caricamento.'); };
             xhr.send(formData);
         }
 
         async function resetSystem() {
-            if(confirm('Vuoi davvero cancellare la memoria della chat?')) {
-                await fetch('/reset', {method: 'POST'});
-                location.reload();
+            if(confirm('Sei sicuro di voler cancellare la memoria e iniziare una nuova sessione?')) {
+                try {
+                    await fetch('/reset', {method: 'POST'});
+                    location.reload();
+                } catch(e) {
+                    alert('Errore durante il reset del sistema.');
+                }
             }
         }
 

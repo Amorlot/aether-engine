@@ -3,7 +3,7 @@
 
 ### README.md
 
-```markdown
+
 # Aether Engine
 
 High-performance RAG (Retrieval-Augmented Generation) system with a localized reasoning model and vector database.
@@ -26,7 +26,6 @@ High-performance RAG (Retrieval-Augmented Generation) system with a localized re
    git clone [https://github.com/username/aether-engine.git](https://github.com/username/aether-engine.git)
    cd aether-engine
 
-```
 
 2. Build and start the system:
 ```bash
