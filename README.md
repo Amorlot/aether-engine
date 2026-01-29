@@ -88,5 +88,13 @@ __pycache__/
 .docker
 
 ```
+Scalability and Deployment (Cloud-Native)
 
+While the project is optimized for local execution via **Docker Compose**, the architecture is designed to be "Cloud-Ready." The `/k8s` directory includes manifests for orchestration using **Kubernetes**:
+
+- **Deployment**: Configuration for horizontal scaling of the Rust backend with replica management to ensure High Availability.
+- **Service**: Implementation of a LoadBalancer to distribute traffic across various pods.
+- **Resource Management**: Definition of CPU and memory limits and requests for efficient resource utilization within a production cluster.
+
+This structure allows for a seamless transition from a local development environment to a scalable cloud infrastructure (AWS EKS, Google GKE, or Azure AKS), demonstrating a clear separation between application logic and infrastructure management.
 ---
