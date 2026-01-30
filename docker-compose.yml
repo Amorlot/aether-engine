@@ -1,4 +1,3 @@
-
 services:
   # --- Backend Service (Rust Rocket) ---
   api-rust:
@@ -11,10 +10,17 @@ services:
     environment:
       - ROCKET_ADDRESS=0.0.0.0
       - ROCKET_PORT=8000
-      - ROCKET_PROFILE=debug
-      # Explicitly define external service URLs for clarity (optional override)
+      # Changed to 'release' to maximize performance
+      - ROCKET_PROFILE=release
+      # Correct 64-char key (prevents panic errors)
+      - ROCKET_SECRET_KEY=7b8f9e0a1b2c3d4e5f6a7b8f9e0a1b2c3d4e5f6a7b8f9e0a1b2c3d4e5f6a7b8f
       - QDRANT_HOST=qdrant
       - OLLAMA_HOST=ollama
+    volumes:
+      # OPTIMIZATION 1: Persistent AI model cache on disk (starts in 2 seconds instead of 2 minutes)
+      - ./model_cache:/root/.cache/fastembed
+      # OPTIMIZATION 2: Frontend hot-reload (edit index.html and see changes immediately)
+      - ./api-rust/static:/app/static
     depends_on:
       - qdrant
       - ollama

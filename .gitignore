@@ -36,4 +36,7 @@ ollama_storage/
 # --- Uploads & Temporary Files ---
 *.pdf
 *.log
-temp/
+temp/model_cache/
+qdrant_storage/
+ollama_storage/
+api-rust/target/

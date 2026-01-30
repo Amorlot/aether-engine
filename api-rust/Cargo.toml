@@ -21,6 +21,7 @@ fastembed = "4.0"
 # Utilities
 uuid = { version = "1.4", features = ["v4"] }
 scraper = "0.19" 
+futures-util = "0.3"
 
 # PDF Parsing
 lopdf = "0.32"
