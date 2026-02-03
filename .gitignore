@@ -1,10 +1,10 @@
 # --- Rust ---
 /target
 /api-rust/target
+/kimi-intelligence/target
 **/*.rs.bk
 
-# Note: Cargo.lock is intentionally kept to ensure reproducible builds.
-# Do not uncomment the line below unless strictly necessary.
+# Note: Cargo.lock is kept for reproducible builds.
 # Cargo.lock
 
 # --- Python ---
@@ -22,12 +22,9 @@ venv/
 docker-compose.override.yml
 .fastembed_cache/
 
-# Local Storage Volumes (mapped in docker-compose)
-qdrant_storage/
-ollama_storage/
-
 # --- IDE & Environment ---
 .env
+.env.*
 .vscode/
 .idea/
 *.swp
@@ -39,4 +36,3 @@ ollama_storage/
 temp/model_cache/
 qdrant_storage/
 ollama_storage/
-api-rust/target/
