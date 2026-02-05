@@ -33,6 +33,15 @@ docker-compose.override.yml
 # --- Uploads & Temporary Files ---
 *.pdf
 *.log
-temp/model_cache/
+temp/
+model_cache/
 qdrant_storage/
 ollama_storage/
+
+# --- Rust (Additional) ---
+# Any Cargo.lock in subdirectories (for libraries)
+**/Cargo.lock
+
+# --- Secrets ---
+**/.env
+.env.local
