@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: api-rust
-        image: tuo-utente-github/aether-engine-api:latest # L'immagine caricata sul registro
+        image: Amorlot/aether-engine-api:latest # L'immagine caricata sul registro
         ports:
         - containerPort: 8000
         resources:
